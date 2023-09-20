@@ -1,7 +1,5 @@
 import pandas as pd
 
-from db import FeedMessage, session
-
 
 def current_bid_ask():
     df = pd.read_sql("feed_message", "sqlite:///database.db")
@@ -11,7 +9,7 @@ def current_bid_ask():
 def largest_diff_bid_ask():
     df = pd.read_sql("feed_message", "sqlite:///database.db")
     df["diff"] = df["highest_bid"] - df["lowest_ask"]
-    print(df["diff"].abs().max())
+    print(df[df["diff"].abs().max() == df["diff"].abs()])
 
 
 def mid_price():
@@ -23,4 +21,4 @@ def mid_price():
     print(a.resample("1min").mean())
 
 
-mid_price()
+largest_diff_bid_ask()
