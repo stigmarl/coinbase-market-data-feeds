@@ -1,5 +1,6 @@
 
-
+- highest bid -> best bid 
+- lowest ask -> best ask
 
 ## References
 - https://github.com/python-websockets/websockets

@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 websockets = "^11.0.3"
+sqlalchemy = "^2.0.21"
 
 
 [tool.poetry.group.dev.dependencies]
