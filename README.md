@@ -96,7 +96,7 @@ Synapse Analytics is also tightly coupled with Azure Machine Learning, allowing 
 ##### Azure Machine Learning
 Train and invoke ML models to predict future mid-price forecasts. Existing models can be deployed, or new ones trained on existing forecast data available in one of the data layers.
 
-#### Serve:
+#### Serve
 ##### Power BI
 Datasets can be directly loaded from the final data layer to create visualization for the end-users.
 
