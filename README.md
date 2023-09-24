@@ -1,6 +1,5 @@
 # Coinbase market data feeds insights
 
-
 ## 1. PoC Tool
 
 ### Assumptions
@@ -11,6 +10,7 @@
 - The output only needs to be printed in the terminal, and not saved to a persistent datastore.
 - Assumes that the `ticker_batch` channel on average sends message every 5 seconds.
   - This assumption will be used to predict the mid_price forecasts, by using `shift()` to look 12 periods ahead (`12 * 5s = 60s`.
+- The market data is "linear enough" for a `LinearRegression` model to be suitable for predicting future mid prices.
 
 ### Details
 - Continuously retrain `LinearRegression` model on previous data.
@@ -44,6 +44,11 @@ poetry shell
 ```
 
 Start the application:
+```bash
+coinbase_insights --product-id ETH-USD
+```
+
+See available param
 
 ### References
 - [GitHub - python-websockets/websockets: Library for building WebSocket servers and clients in Python](https://github.com/python-websockets/websockets)

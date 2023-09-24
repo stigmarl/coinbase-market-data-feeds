@@ -8,8 +8,7 @@ import typer
 from websockets.sync.client import connect
 
 from coinbase_insights import __app_name__, __version__
-from coinbase_insights.db import Session, insert_feed_message
-from coinbase_insights.insights import create_predictor, print_insights
+from coinbase_insights.insights import calculate_forecasts, print_insights
 
 COINBASE_WS_FEED = "wss://ws-feed.exchange.coinbase.com"
 
