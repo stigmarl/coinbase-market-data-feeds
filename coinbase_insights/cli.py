@@ -1,15 +1,19 @@
 import json
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression
+import typer
 from websockets.sync.client import connect
 
+from coinbase_insights import __app_name__, __version__
 from coinbase_insights.db import Session, insert_feed_message
+from coinbase_insights.insights import create_predictor, print_insights
 
 COINBASE_WS_FEED = "wss://ws-feed.exchange.coinbase.com"
+
+app = typer.Typer()
 
 
 def create_subscribe_message(product_id: str):
@@ -46,62 +50,14 @@ def build_dataframe(df_output, message):
     return df_output
 
 
-def print_insights(df_output):
-    current = df_output.iloc[-1]
-
-    print("*" * 40)
-    print(f"Current timestamp: {current.time}")
-    print(
-        f"Total runtime: {(df_output.index.max() - df_output.index.min()) / pd.Timedelta('1s'):.1f} seconds"
+@app.command("run")
+def run(
+    product_id: str = typer.Option(
+        "ETH-USD", "--product-id", prompt="Coinbase product id?"
     )
-    print()
-
-    print(f"Current highest bid: {current['highest_bid']}")
-    print(f"\tAt quantity:     {current['highest_bid_quantity']}")
-    print(f"Current lowest ask:  {current['lowest_ask']}")
-    print(f"\tAt quantity:     {current['lowest_ask_quantity']}")
-    print()
-
-    highest_diff = df_output[
-        df_output["diff"].abs().max() == df_output["diff"].abs()
-    ].iloc[0]
-    print(f"Highest diff: {highest_diff['diff']:.3f}")
-    print()
-
-    mid_price = df_output[["mid_price"]]
-    for m in [1, 5, 15]:
-        avg_mid_price = (
-            mid_price.resample(f"{m}min", origin="end").mean().iloc[-1]["mid_price"]
-        )
-        print(f"Average mid-price in last {m} minutes: {avg_mid_price:.3f}")
-    print("\n")
-
-    forecast_60s = df_output.iloc[-1]["mid_price_pred_60s"]
-    print(f"Forecast in 60 s: {forecast_60s:.3f}")
-
-    forecast_error = df_output[["forecast_error"]]
-    for m in [1, 5, 15]:
-        avg_forecast_error = (
-            forecast_error.resample(f"{m}min", origin="end")
-            .mean()
-            .iloc[-1]["forecast_error"]
-        )
-        print(f"Average forecast error in last {m} minutes: {avg_forecast_error:.3f}")
-    print("\n")
-
-
-def create_predictor(df) -> LinearRegression:
-    linear_regressor = LinearRegression()
-    X = df.index.values.astype("int64").reshape(-1, 1)
-    Y = df["mid_price"].values.astype("float64").reshape(-1, 1)
-    linear_regressor.fit(X, Y)
-
-    return linear_regressor
-
-
-if __name__ == "__main__":
+):
     with connect(COINBASE_WS_FEED) as websocket:
-        subscribe_message = create_subscribe_message("ETH-USD")
+        subscribe_message = create_subscribe_message(product_id)
         websocket.send(json.dumps(subscribe_message))
 
         session = Session()
@@ -141,3 +97,23 @@ if __name__ == "__main__":
 
             except KeyboardInterrupt:
                 print("Finished!")
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"{__app_name__} v{__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: Optional[bool] = typer.Option(
+        None,
+        "--version",
+        "-v",
+        help="Show the application's version and exit.",
+        callback=_version_callback,
+        is_eager=True,
+    )
+) -> None:
+    return
