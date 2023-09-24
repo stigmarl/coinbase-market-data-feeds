@@ -48,7 +48,7 @@ poetry shell
 
 Start the application:
 ```bash
-coinbase_insights --product-id ETH-USD
+coinbase_insights run --product-id ETH-USD
 ```
 
 Show application help:
