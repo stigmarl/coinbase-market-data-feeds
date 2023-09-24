@@ -4,6 +4,9 @@ version = "0.1.0"
 description = ""
 authors = ["Stig-Martin Liavåg <stigmartin94@gmail.com>"]
 readme = "README.md"
+packages = [
+    { include = "coinbase_insights" }
+]
 
 [tool.poetry.scripts]
 coinbase_insights = "coinbase_insights.cli:app"
