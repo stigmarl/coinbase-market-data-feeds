@@ -1,9 +1,7 @@
 # Coinbase market data feeds insights
 
-## 1. PoC Tool
 
-- highest bid -> best bid 
-- lowest ask -> best ask
+## 1. PoC Tool
 
 ### Assumptions
 - Don't overcomplicate it (important).
@@ -11,16 +9,48 @@
 - The user needs to specify a valid `product_id` when starting the application.
 - We're only interested in metrics for data collected *after* the application has started. 
 - The output only needs to be printed in the terminal, and not saved to a persistent datastore.
-- Forecasted mid-price in 60 seconds is a direct multi-step forecasting cased on previous values.
-  - In this case, it will be step T+12, if there's a 5 second interval between messages.
+- Assumes that the `ticker_batch` channel on average sends message every 5 seconds.
+  - This assumption will be used to predict the mid_price forecasts, by using `shift()` to look 12 periods ahead (`12 * 5s = 60s`.
+
+### Details
+- Continuously retrain `LinearRegression` model on previous data.
+- Use `resample(foo, origin="end")` to calculate averages relative to last timestamp.
+- Open a websocket to the `ticker_batch` websocket channel to retrieve feed messages every 5 seconds.
+- Calculate new columns, predict and print output before retrieving the next feed message from the websocket.
+
+### Limitations
+- All data will be lost on closing the application, as the data only exists in memory.
+- 
+
+### Setup
+
+Libraries used:
+- [pandas](https://pandas.pydata.org/)
+- [websockets](https://websockets.readthedocs.io/en/stable/)
+- [scikit-learn](https://scikit-learn.org/stable/)
+
+Prerequisites:
+- Python 3.11.5 (latest)
+- Poetry
+
+Setup and installation of project dependencies:
+```bash
+poetry install
+```
+
+Spawn a shell within the virtual environment:
+```bash
+poetry shell
+```
+
+Start the application:
 
 ### References
-- https://github.com/python-websockets/websockets
-- https://docs.cloud.coinbase.com/advanced-trade-api/docs/ws-channels
-- https://stackoverflow.com/questions/66683387/coinbase-websocket-channel-match-vs-ticker
-- https://www.coinbase.com/learn/advanced-trading/what-is-an-order-book
-- https://skforecast.org/0.10.0/index.html#
-- https://joaquinamatrodrigo.github.io/skforecast/0.10.0/introduction-forecasting/introduction-forecasting.html#direct-multi-step-forecasting
+- [GitHub - python-websockets/websockets: Library for building WebSocket servers and clients in Python](https://github.com/python-websockets/websockets)
+- [Advanced Trade WebSocket Channels | Coinbase Cloud](https://docs.cloud.coinbase.com/advanced-trade-api/docs/ws-channels)
+- [Coinbase Websocket Channel match vs ticker - Stack Overflow](https://stackoverflow.com/questions/66683387/coinbase-websocket-channel-match-vs-ticker)
+- [What is an order book? | Coinbase](https://www.coinbase.com/learn/advanced-trading/what-is-an-order-book)
+- [sklearn.linear\_model.LinearRegression — scikit-learn 1.3.1 documentation](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html)
 
 
 ## 2. Public Cloud Architecture
@@ -64,5 +94,6 @@ The final data layer can also be copied into a data warehouse for storage and fu
 
 
 ### References
-- https://learn.microsoft.com/en-us/azure/architecture/example-scenario/dataplate2e/data-platform-end-to-end?tabs=portal
-- https://learn.microsoft.com/en-us/azure/event-hubs/event-hubs-about
+- [Analytics end-to-end with Azure Synapse - Azure Architecture Center | Microsoft Learn](https://learn.microsoft.com/en-us/azure/architecture/example-scenario/dataplate2e/data-platform-end-to-end?tabs=portal)
+
+- [What is Azure Event Hubs? - a Big Data ingestion service - Azure Event Hubs | Microsoft Learn](https://learn.microsoft.com/en-us/azure/event-hubs/event-hubs-about)
