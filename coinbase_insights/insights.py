@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
@@ -73,3 +74,18 @@ def create_predictor(df) -> LinearRegression:
     linear_regressor.fit(X, Y)
 
     return linear_regressor
+
+
+def calculate_forecasts(df: pd.DataFrame) -> pd.DataFrame:
+    reg = create_predictor(df)
+
+    tp_shift = np.array(df.index.shift(60, freq="s").max().value).reshape(-1, 1)
+
+    mid_price_pred = reg.predict(tp_shift)
+
+    df.at[df.index.max(), "mid_price_pred_60s"] = mid_price_pred[0]
+
+    df["mid_price_pred"] = df["mid_price_pred_60s"].shift(12)
+    df["forecast_error"] = (df["mid_price"] - df["mid_price_pred"]).abs()
+
+    return df

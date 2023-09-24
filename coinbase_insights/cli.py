@@ -2,7 +2,6 @@ import json
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-import numpy as np
 import pandas as pd
 import typer
 from websockets.sync.client import connect
@@ -49,7 +48,11 @@ def build_dataframe(df_output, message):
     return df_output
 
 
-@app.command("run")
+@app.command(
+    "run",
+    help="Receive metrics every five seconds for a specified Coinbase product.",
+    short_help="Run application to receive metrics.",
+)
 def run(
     product_id: str = typer.Option(
         "ETH-USD", "--product-id", prompt="Coinbase product id?"
@@ -58,8 +61,6 @@ def run(
     with connect(COINBASE_WS_FEED) as websocket:
         subscribe_message = create_subscribe_message(product_id)
         websocket.send(json.dumps(subscribe_message))
-
-        session = Session()
 
         df_output = pd.DataFrame()
         is_running = True
@@ -75,27 +76,15 @@ def run(
                     continue
 
                 payload = process_message(message)
-                # insert_feed_message(payload, session)
-                session.commit()
                 df_output = build_dataframe(df_output, payload)
 
-                reg = create_predictor(df_output)
-                tp_shift = np.array(
-                    df_output.index.shift(60, freq="s").max().value
-                ).reshape(-1, 1)
-                mid_price_pred = reg.predict(tp_shift)
-                df_output.at[
-                    df_output.index.max(), "mid_price_pred_60s"
-                ] = mid_price_pred[0]
-                df_output["mid_price_pred"] = df_output["mid_price_pred_60s"].shift(12)
-                df_output["forecast_error"] = (
-                    df_output["mid_price"] - df_output["mid_price_pred"]
-                ).abs()
+                df_output = calculate_forecasts(df_output)
 
                 print_insights(df_output)
 
             except KeyboardInterrupt:
-                print("Finished!")
+                print("Keyboard interrupt received, closing down...")
+                exit()
 
 
 def _version_callback(value: bool) -> None:
