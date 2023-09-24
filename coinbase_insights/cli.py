@@ -14,7 +14,16 @@ COINBASE_WS_FEED = "wss://ws-feed.exchange.coinbase.com"
 app = typer.Typer()
 
 
-def create_subscribe_message(product_id: str):
+def create_subscribe_message(product_id: str) -> Dict[str, Any]:
+    """Creates a subscribe message used to subscribe to a specific product
+    in the Coinbase `ticker_batch` channel.
+
+    Args:
+        product_id (str): Coinbase product to receive feed messages for.
+
+    Returns:
+        Dict[str, Any]: Payload for subscribing to websocket.
+    """
     return {
         "type": "subscribe",
         "product_ids": [product_id],
@@ -23,6 +32,24 @@ def create_subscribe_message(product_id: str):
 
 
 def process_message(message: Dict[str, Any]) -> Dict[str, Any]:
+    """Processes a feed message to rename and cast message keys and
+    values to suitabler names and types.
+
+    Args:
+        message (Dict[str, Any]): Coinbase `ticker_batch` message.
+
+    Returns:
+        Dict[str, Any]: Processed message with keys and values:
+        - time: datetime
+        - product_id: str
+        - price: float
+        - highest_bid: float
+        - highest_bid_quantity: float
+        - lowest_ask: float
+        - lowest_ask_quantity: float
+
+    """
+
     payload = {
         "time": datetime.strptime(message["time"], "%Y-%m-%dT%H:%M:%S.%fZ"),
         "product_id": message["product_id"],
@@ -36,7 +63,18 @@ def process_message(message: Dict[str, Any]) -> Dict[str, Any]:
     return payload
 
 
-def build_dataframe(df_output, message):
+def build_dataframe(df_output: pd.DataFrame, message: Dict[str, Any]):
+    """Appends the most recent feed message to the already collected
+    feed message DataFrame. Sets the payload time as index, and adds
+    the `diff` and `mid_price` columns.
+
+    Args:
+        df_output (pd.DataFrame): Previously collected feed message data.
+        message (Dict[str, Any]): Processed recent feed message.
+
+    Returns:
+        pd.DataFrame: Collected feed message data with most recent message.
+    """
     df_payload = pd.DataFrame([message])
     df_payload.index = pd.DatetimeIndex(df_payload.time)
     df_payload["diff"] = df_payload["highest_bid"] - df_payload["lowest_ask"]
