@@ -87,11 +87,11 @@ def build_dataframe(df_output: pd.DataFrame, message: Dict[str, Any]):
 
 
 @app.command(
-    "run",
+    "start",
     help="Receive metrics every five seconds for a specified Coinbase product.",
-    short_help="Run application to receive metrics.",
+    short_help="Start application to receive metrics.",
 )
-def run(
+def start(
     product_id: str = typer.Option(
         "ETH-USD", "--product-id", prompt="Coinbase product id?"
     )
