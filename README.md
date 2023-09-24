@@ -4,23 +4,25 @@
 
 ### Assumptions
 - Don't overcomplicate it (important).
-- The application runs in the foreground in the terminal.
 - The user needs to specify a valid `product_id` when starting the application.
 - We're only interested in metrics for data collected *after* the application has started. 
 - The output only needs to be printed in the terminal, and not saved to a persistent datastore.
 - Assumes that the `ticker_batch` channel on average sends message every 5 seconds.
-  - This assumption will be used to predict the mid_price forecasts, by using `shift()` to look 12 periods ahead (`12 * 5s = 60s`.
+  - This assumption will be used to predict the mid_price forecasts and store the resulting value in the most recent now. The function `pd.DataFrame.shift` can then be used to look 12 periods/rows back (`12 * 5s = 60s`) to get the forecasted value for the (now) most recent row.
 - The market data is "linear enough" for a `LinearRegression` model to be suitable for predicting future mid prices.
 
 ### Details
+- The application runs in the foreground in the terminal.
 - Continuously retrain `LinearRegression` model on previous data.
 - Use `resample(foo, origin="end")` to calculate averages relative to last timestamp.
-- Open a websocket to the `ticker_batch` websocket channel to retrieve feed messages every 5 seconds.
-- Calculate new columns, predict and print output before retrieving the next feed message from the websocket.
+- Open a websocket to the `ticker_batch` websocket channel to receive feed messages every 5 seconds.
+- Calculate new columns, predict and show metrics in the terminal before retrieving the next feed message from the websocket.
 
 ### Limitations
 - All data will be lost on closing the application, as the data only exists in memory.
-- 
+- Performance is not optimal:
+    - Looking at you, `pd.append`!
+    - The `LinearRegression` model is retrained each time a feed message is received. The prediction accuracies (and model training time) will probably increase over time.
 
 ### Setup
 
@@ -28,10 +30,11 @@ Libraries used:
 - [pandas](https://pandas.pydata.org/)
 - [websockets](https://websockets.readthedocs.io/en/stable/)
 - [scikit-learn](https://scikit-learn.org/stable/)
+- [Typer](https://typer.tiangolo.com/)
 
 Prerequisites:
-- Python 3.11.5 (latest)
-- Poetry
+- Python 3.11+
+- [Poetry - Python dependency management and packaging made easy](https://python-poetry.org/)
 
 Setup and installation of project dependencies:
 ```bash
@@ -48,7 +51,10 @@ Start the application:
 coinbase_insights --product-id ETH-USD
 ```
 
-See available param
+Show application help:
+```bash
+coinbase_insights --help
+```
 
 ### References
 - [GitHub - python-websockets/websockets: Library for building WebSocket servers and clients in Python](https://github.com/python-websockets/websockets)
