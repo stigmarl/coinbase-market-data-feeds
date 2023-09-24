@@ -48,12 +48,13 @@ poetry shell
 
 Start the application:
 ```bash
-coinbase_insights start --product-id ETH-USD
+poetry run coinbase_insights start --product-id ETH-USD
 ```
 
 Show application help:
 ```bash
-coinbase_insights --help
+poetry run coinbase_insights --help
+poetry run coinbase_insights run --help
 ```
 
 ### References
